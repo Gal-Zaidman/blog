@@ -1,3 +1,7 @@
 [submodule "themes/live-hugo"]
 	path = themes/live-hugo
 	url = https://github.com/themefisher/liva-hugo.git
+[submodule "public"]
+	path = public
+	url = git@github.com:Gal-Zaidman/Gal-Zaidman.github.io.git
+	branch = master

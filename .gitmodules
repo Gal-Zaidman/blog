@@ -1,0 +1,3 @@
+[submodule "themes/live-hugo"]
+	path = themes/live-hugo
+	url = https://github.com/themefisher/liva-hugo.git

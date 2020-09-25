@@ -1,13 +1,39 @@
-# Creating a Web Crawler with Colly, learn GO by doing
+---
+title: "Web Crawling In Golang With Colly"
+subTitle: "Learn Golang By Doing"
+date: 2020-09-25T00:10:00+03:00
+draft: false
 
-## Before we start
+# post thumb
+image: "images/Golang/colly-web-crawler.png"
+
+# meta description
+author: "Gal Zaidman"
+description: "We will learn what is web crawling and how to implement a simple web crawler in golang using the colly framework"
+
+# taxonomies
+categories:
+  - "Golang"
+
+tags:
+  - "Golang"
+  - "WebCrawling"
+  - "Colly"
+
+# post type
+type: "post"
+---
+
+## Web crawling in Go with Colly
+
+### Before we start
 
 This tutorial was created while implementing a small project that required web crawling.
 It is composed from various descriptions, definitions and examples I saw on the links in the References section as well as my own experience while working on the project.
 
-## What is a web crawler?
+### What is a web crawler?
 
-Essentially, a web crawler is a tool that inspects the HTML of a givin web page and performs some type of actions based on that content. On the simple case (which is what we will implement in this tutorial)the web crawler start from a simple page, and while scanning that page it acquire more links to visit.
+Essentially, a web crawler is a tool that inspects the HTML of a givin web page and performs some type of actions based on that content. On the simple case (which is what we will implement in this tutorial) the web crawler start from a simple page, and while scanning that page it acquire more links to visit.
 Lets look at the following pseudo code to better understand the basics:
 
 ```python
@@ -22,13 +48,13 @@ while Queue is not empty:
         Queue.Add(link)
 ```
 
-Usually when we think of writing wab crawlers the first language tha comes to mind is python, with its wide selection of frameworks and reach data processing abilities, however Golang has a very good rich ecosystem for web crawling as well that lets you utilize the efficiency of Golang.
+Usually when we think of writing wab crawlers the first language tha comes to mind is python, with its wide selection of frameworks and rich data processing abilities, however Golang has a very good rich ecosystem for web crawling as well that lets you utilize the efficiency of Golang.
 
-## Colly - The golang web crawling framework
+### Colly - The golang web crawling framework
 
-### Introduction
+#### Introduction
 
-Colly is a Golang framework for building web scrapers. With Colly you can build web scrapers of various complexity, from simple scraper to complex asynchronous website crawlers processing millions of web pages. Colly is very much "Batteries-Included", meaning you will get most the required features "Out of the box".
+Colly is a Golang framework for building web scrapers. With Colly you can build web scrapers of various complexity, from simple scraper to complex asynchronous website crawlers processing millions of web pages. Colly is very much "Batteries-Included", meaning you will get the most required features "Out of the box".
 Colly has a rich API with features such as:
 
 - Manages request delays and maximum concurrency per domain
@@ -52,9 +78,9 @@ import "github.com/gocolly/colly"
 
 Latest info can be found in [colly installation guide](http://go-colly.org/docs/introduction/install/)
 
-### Basic Components
+#### Basic Components
 
-#### Collector
+##### Collector
 
 Colly’s main entity is the [Collector struct](https://pkg.go.dev/github.com/gocolly/colly/v2?tab=doc#Collector). The Collector keep track of pages that are queued to visit, manages the network communication and responsible for the execution of the attached callbacks when a page is being scraped.
 
@@ -77,7 +103,7 @@ CollectorOption is a function which accepts a pointer to a Collector and configu
 type CollectorOption func(*Collector)
 ```
 
-We can basically configure each field in the Collector struct, for example here is a collector that is Asynchronous and will will only go to links on the starting page:
+We can basically configure each field in the Collector struct, for example here is a collector that is Asynchronous and will only go to links on the starting page:
 
 ```go
 c := colly.NewCollector(
@@ -95,7 +121,7 @@ Important Notes:
 
 You can see the full list of CollectorOption functions in [colly goDocs](https://pkg.go.dev/github.com/gocolly/colly/v2?tab=doc#CollectorOption) and for more detailed information about how we can configure the collector go the the [colly configuration docs](http://go-colly.org/docs/introduction/configuration/)
 
-#### Callbacks
+##### Callbacks
 
 Colly gives us a number of callbacks that we can setup. Those callbacks will be called on various stages in our crawling job and you will need to think which one do you want based on you requirements.
 Here is a list of all the callbacks and the order in which they will be called (taken from the colly website[1]):
@@ -111,15 +137,15 @@ Each of those callbacks receive a function which will be triggered when the call
 
 Now that we understand the basics of colly, lets dive into our project
 
-### Our project
+#### Our project
 
-#### Overview
+##### Overview
 
 So under the openshift organization we have various github repos. Merged PRs will trigger a release build. Whenever QE needs to verify a Bug which is resolved in a certain PR they need to manually look at when the PR was merged and then go to Openshift release page and find a release job which was triggered after the time the PR was merged, check its page and see that it contains a the PR and then they know that they can use the release for verification. We want to automate this task.
 
-We will build a small project that will use github golang library for checking when a PR was merged, and then crawl on the openshift release page and find the release which contain the PR.
+We will build a small project that checks when a PR was merged, and then crawl on the openshift release page and find the release which contain the PR.
 
-#### Logic
+##### Logic
 
 1. Retrieve the PR from the user.
 2. Validate that it is a github PR link.
@@ -127,7 +153,7 @@ We will build a small project that will use github golang library for checking w
 4. Find all the links to release pages on the openshift release.
 5. On each link search for the PR ID.
 
-#### Implementation
+##### Implementation
 
 So we will use:
 
@@ -143,7 +169,7 @@ func main() {
 	debug := flag.Bool("debug", false, "run with debug")
 	flag.Parse()
 	url := flag.Arg(0)
-	prd, err = *createPullRequestData(url)
+	prd, err = newPullRequestData(url)
 	if err != nil {
 		panic(err)
 	}
@@ -183,23 +209,26 @@ Then write a the logic for getting a PR Url and creating a PullRequestData objec
 func parsePrURL(prURL string) (string, string, int, error) {
 	githubReg := regexp.MustCompile(`(https*:\/\/)?github\.com\/(.+\/){2}pull\/\d+`)
 	if !githubReg.MatchString(prURL) {
-		return "", "", 0, fmt.Errorf("error: PR URL is not a github PR URL, got url %v", prURL)
+		return "", "", 0, fmt.Errorf("ERROR: prURL is not a github PR URL, got url %v", prURL)
 	}
 	u, err := url.Parse(prURL)
 	if err != nil {
 		return "", "", 0, err
 	}
 	pArr := strings.Split(u.Path, "/")
+	if len(pArr) != 5 {
+		return "", "", 0, fmt.Errorf("Expected PR URL with the form of github.com/ORG/REPO/pull/ID, but instead got %v", prURL)
+	}
 	id, err := strconv.Atoi(pArr[4])
 	if err != nil {
-		return "", "", 0, fmt.Errorf("error: expected PR URL with the form of github.com/ORG/REPO/pull/ID, but got %v", prURL)
+		return "", "", 0, fmt.Errorf("ERROR: Expected PR URL with the form of github.com/ORG/REPO/pull/ID, but instead got %v", prURL)
 	}
 	return pArr[1], pArr[2], id, nil
 }
 
 // Creates a Github client using AccessToken if it exists or an un authenticated client
 // if no AccessToken is available and retrieves the PR details from github
-func getGithubPr(org string, repo string, id int) (*github.PullRequest, error) {
+func getGithubPrData(org string, repo string, id int) (*github.PullRequest, error) {
 	var client *github.Client
 	ctx := context.Background()
 	accessToken := os.Getenv("AccessToken")
@@ -216,14 +245,14 @@ func getGithubPr(org string, repo string, id int) (*github.PullRequest, error) {
 	return pr, err
 }
 
-func createPullRequestData(prURL string) (*PullRequestData, error) {
+func newPullRequestData(prURL string) (*PullRequestData, error) {
 	org, repo, id, err := parsePrURL(prURL)
 	if err != nil {
-		return PullRequestData{}, err
+		return &PullRequestData{}, err
 	}
-	pr, err := getGithubPr(org, repo, id)
+	pr, err := getGithubPrData(org, repo, id)
 	if err != nil {
-		return PullRequestData{}, err
+		return &PullRequestData{}, err
 	}
 	return &PullRequestData{
 		org:   org,
@@ -272,16 +301,17 @@ func filterReleasesLinks(e *colly.HTMLElement) {
 	if err != nil {
 		fmt.Printf("Error time.Parse: ", err)
 	}
-	// Check if the release is created after the PR is merged
-	if tr.mDate.After(prd) {
-        link := e.Attr("href")
-        releasePageCrawler.Visit(e.Request.AbsoluteURL(link))
+	// Check if PR merge time t is after the release creation time tr
+	if prd.mDate.After(tr) {
+		return
 	}
+	link := e.Attr("href")
+	releasePageCrawler.Visit(e.Request.AbsoluteURL(link))
 }
 ```
 
 Now lets configure our second crawler, the release page crawler.
-The release page crawler works on one page only, the release page which should contain a link the the given PR.
+The release page crawler works on one page only, the release page which should contain a link to the given PR.
 The release page crawler will be triggered by the release status crawler when it finds a relevant link, so it needs to work on Async mode.
 
 ```go
@@ -305,8 +335,8 @@ func setupReleasePageCrawler(debug bool) {
 }
 ```
 
-Here we create a new crawler that can visit only ocp domain ,set MaxDepth to 1 so it will stay only one first link and configure it to work in Async mode.
-The we set a limit to be a good citizen of the web, this is important because websites can block users that overload the site.
+Here we create a new crawler that can visit only ocp domain ,set MaxDepth to 1 so it will stay only on the first link and configure it to work in Async mode.
+Then we set a limit to be a good citizen of the web, this is important because websites can block users that overload the site.
 Then we will use the OnRequest callback to print the URL we are visiting in debug mod.
 Finally we use the OnHTML callback to set a function that will be called on each a\[href\] object.
 findPR is also a [HTMLCallback](https://pkg.go.dev/github.com/gocolly/colly?tab=doc#HTMLCallback) function.
@@ -327,8 +357,9 @@ func findPR(e *colly.HTMLElement) {
 ```
 
 The full code can be found on:
+https://github.com/Gal-Zaidman/ocp-release-finder
 
-## References:
+### References:
 
 [1] [Colly web page and docs](http://go-colly.org/)
 [2] [Scraping the Web in Golang with Colly and Goquery](https://benjamincongdon.me/blog/2018/03/01/Scraping-the-Web-in-Golang-with-Colly-and-Goquery/)

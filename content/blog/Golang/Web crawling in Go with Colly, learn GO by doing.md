@@ -24,8 +24,6 @@ tags:
 type: "post"
 ---
 
-## Web crawling in Go with Colly
-
 ### Before we start
 
 This tutorial was created while implementing a small project that required web crawling.
